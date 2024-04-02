@@ -145,7 +145,7 @@ function createRadioOrCheckbox(fd) {
 }
 
 function createLegend(fd) {
-  return createLabel(fd, 'legend');
+  return createLabel(fd, {}, 'legend');
 }
 
 function createFieldSet(fd) {

@@ -60,9 +60,10 @@ export function createLabel(fd, placeholders, tagName = 'label') {
     label.setAttribute('for', fd.id);
     label.className = 'field-label';
     if (fd.label.richText === true) {
-      label.innerHTML = placeholders[toCamelCase(stripTags(fd.label.value))];
+      // eslint-disable-next-line max-len
+      label.innerHTML = placeholders ? placeholders[toCamelCase(stripTags(fd.label.value))] : stripTags(fd.label.value);
     } else {
-      label.textContent = placeholders[toCamelCase(fd.label.value)];
+      label.textContent = placeholders ? placeholders[toCamelCase(fd.label.value)] : fd.label.value;
     }
     if (fd.label.visible === false) {
       label.dataset.visible = 'false';
