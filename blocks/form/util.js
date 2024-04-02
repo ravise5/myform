@@ -80,7 +80,7 @@ export function getHTMLRenderType(fd) {
   return fd?.fieldType?.replace('-input', '') ?? 'text';
 }
 
-export function createFieldWrapper(fd, tagName = 'div', labelFn = createLabel) {
+export async function createFieldWrapper(fd, tagName = 'div', labelFn = createLabel) {
   const fieldWrapper = document.createElement(tagName);
   const nameStyle = fd.name ? ` field-${toClassName(fd.name)}` : '';
   const renderType = getHTMLRenderType(fd);
@@ -91,8 +91,10 @@ export function createFieldWrapper(fd, tagName = 'div', labelFn = createLabel) {
   }
   fieldWrapper.classList.add('field-wrapper');
   if (fd.label && fd.label.value && typeof labelFn === 'function') {
-    const label = labelFn(fd);
-    if (label) { fieldWrapper.append(label); }
+    const label = await labelFn(fd);
+    if (label) {
+      fieldWrapper.append(label);
+    }
   }
   return fieldWrapper;
 }
