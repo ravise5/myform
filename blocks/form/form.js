@@ -11,6 +11,7 @@ import DocBasedFormToAF from './transform.js';
 import transferRepeatableDOM from './components/repeat.js';
 import { handleSubmit } from './submit.js';
 import { getSubmitBaseUrl } from './constant.js';
+import { fetchPlaceholders } from '../../scripts/aem.js';
 
 export const DELAY_MS = 0;
 let captchaField;

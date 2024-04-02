@@ -1,5 +1,6 @@
-import { fetchPlaceholders } from '../../scripts/aem.js';
 // create a string containing head tags from h1 to h5
+import { fetchPlaceholders } from '../../scripts/aem';
+
 const headings = Array.from({ length: 5 }, (_, i) => `<h${i + 1}>`).join('');
 const allowedTags = `${headings}<a><b><p><i><em><strong><ul><li>`;
 
@@ -54,8 +55,7 @@ export function resetIds() {
   getId(clear);
 }
 
-export async function createLabel(fd, tagName = 'label') {
-  const placeholders = await fetchPlaceholders('de'); // hard-cording for now
+export function createLabel(fd, placeholders, tagName = 'label') {
   if (fd.label && fd.label.value) {
     const label = document.createElement(tagName);
     label.setAttribute('for', fd.id);
@@ -85,13 +85,14 @@ export async function createFieldWrapper(fd, tagName = 'div', labelFn = createLa
   const nameStyle = fd.name ? ` field-${toClassName(fd.name)}` : '';
   const renderType = getHTMLRenderType(fd);
   const fieldId = `${renderType}-wrapper${nameStyle}`;
+  const placeholders = await fetchPlaceholders('de'); // hard-cording for now
   fieldWrapper.className = fieldId;
   if (fd.visible === false) {
     fieldWrapper.dataset.visible = fd.visible;
   }
   fieldWrapper.classList.add('field-wrapper');
   if (fd.label && fd.label.value && typeof labelFn === 'function') {
-    const label = await labelFn(fd);
+    const label = await labelFn(fd, placeholders);
     if (label) {
       fieldWrapper.append(label);
     }
