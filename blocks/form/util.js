@@ -1,3 +1,4 @@
+import { fetchPlaceholders } from '../../scripts/aem.js';
 // create a string containing head tags from h1 to h5
 const headings = Array.from({ length: 5 }, (_, i) => `<h${i + 1}>`).join('');
 const allowedTags = `${headings}<a><b><p><i><em><strong><ul><li>`;
@@ -53,15 +54,16 @@ export function resetIds() {
   getId(clear);
 }
 
-export function createLabel(fd, tagName = 'label') {
+export async function createLabel(fd, tagName = 'label') {
+  const placeholders = await fetchPlaceholders('de'); // hard-cording for now
   if (fd.label && fd.label.value) {
     const label = document.createElement(tagName);
     label.setAttribute('for', fd.id);
     label.className = 'field-label';
     if (fd.label.richText === true) {
-      label.innerHTML = stripTags(fd.label.value);
+      label.innerHTML = placeholders[stripTags(fd.label.value)];
     } else {
-      label.textContent = fd.label.value;
+      label.textContent = placeholders[fd.label.value];
     }
     if (fd.label.visible === false) {
       label.dataset.visible = 'false';
