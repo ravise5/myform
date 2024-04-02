@@ -1,6 +1,4 @@
 // create a string containing head tags from h1 to h5
-import { fetchPlaceholders } from '../../scripts/aem.js';
-
 const headings = Array.from({ length: 5 }, (_, i) => `<h${i + 1}>`).join('');
 const allowedTags = `${headings}<a><b><p><i><em><strong><ul><li>`;
 
@@ -80,19 +78,18 @@ export function getHTMLRenderType(fd) {
   return fd?.fieldType?.replace('-input', '') ?? 'text';
 }
 
-export async function createFieldWrapper(fd, tagName = 'div', labelFn = createLabel) {
+export function createFieldWrapper(fd, placeholders, tagName = 'div', labelFn = createLabel) {
   const fieldWrapper = document.createElement(tagName);
   const nameStyle = fd.name ? ` field-${toClassName(fd.name)}` : '';
   const renderType = getHTMLRenderType(fd);
   const fieldId = `${renderType}-wrapper${nameStyle}`;
-  const placeholders = await fetchPlaceholders('de'); // hard-cording for now
   fieldWrapper.className = fieldId;
   if (fd.visible === false) {
     fieldWrapper.dataset.visible = fd.visible;
   }
   fieldWrapper.classList.add('field-wrapper');
   if (fd.label && fd.label.value && typeof labelFn === 'function') {
-    const label = await labelFn(fd, placeholders);
+    const label = labelFn(fd, placeholders);
     if (label) {
       fieldWrapper.append(label);
     }

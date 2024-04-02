@@ -11,7 +11,7 @@ import DocBasedFormToAF from './transform.js';
 import transferRepeatableDOM from './components/repeat.js';
 import { handleSubmit } from './submit.js';
 import { getSubmitBaseUrl } from './constant.js';
-
+import { fetchPlaceholders } from '../../scripts/aem.js';
 
 export const DELAY_MS = 0;
 let captchaField;
@@ -322,14 +322,14 @@ function inputDecorator(field, element) {
   }
 }
 
-function renderField(fd) {
+function renderField(fd, placeholders) {
   const fieldType = fd?.fieldType?.replace('-input', '') ?? 'text';
   const renderer = fieldRenderers[fieldType];
   let field;
   if (typeof renderer === 'function') {
     field = renderer(fd);
   } else {
-    field = createFieldWrapper(fd);
+    field = createFieldWrapper(fd, placeholders);
     field.append(createInput(fd));
   }
   if (fd.description) {
@@ -344,13 +344,14 @@ function renderField(fd) {
 
 export async function generateFormRendition(panel, container) {
   const { items = [] } = panel;
+  const placeholders = await fetchPlaceholders('de'); // hard-cording for now
   const promises = items.map(async (field) => {
     field.value = field.value ?? '';
     const { fieldType } = field;
     if (fieldType === 'captcha') {
       captchaField = field;
     } else {
-      const element = renderField(field);
+      const element = renderField(field, placeholders);
       if (field.appliedCssClassNames) {
         element.className += ` ${field.appliedCssClassNames}`;
       }
