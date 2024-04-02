@@ -149,7 +149,7 @@ function createLegend(fd) {
 }
 
 function createFieldSet(fd) {
-  const wrapper = createFieldWrapper(fd, 'fieldset', createLegend);
+  const wrapper = createFieldWrapper(fd, {}, 'fieldset', createLegend);
   wrapper.id = fd.id;
   wrapper.name = fd.name;
   if (fd.fieldType === 'panel') {
