@@ -1,3 +1,4 @@
+import { toCamelCase } from '../../scripts/aem.js';
 // create a string containing head tags from h1 to h5
 const headings = Array.from({ length: 5 }, (_, i) => `<h${i + 1}>`).join('');
 const allowedTags = `${headings}<a><b><p><i><em><strong><ul><li>`;
@@ -59,9 +60,9 @@ export function createLabel(fd, placeholders, tagName = 'label') {
     label.setAttribute('for', fd.id);
     label.className = 'field-label';
     if (fd.label.richText === true) {
-      label.innerHTML = placeholders[stripTags(fd.label.value)];
+      label.innerHTML = placeholders[toCamelCase(stripTags(fd.label.value))];
     } else {
-      label.textContent = placeholders[fd.label.value];
+      label.textContent = placeholders[toCamelCase(fd.label.value)];
     }
     if (fd.label.visible === false) {
       label.dataset.visible = 'false';
