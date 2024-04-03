@@ -329,7 +329,7 @@ function renderField(fd) {
   const renderer = fieldRenderers[fieldType];
   let field;
   if (typeof renderer === 'function') {
-    field = renderer(fd);
+    field = renderer(fd, placeholders);
   } else {
     field = createFieldWrapper(fd, placeholders);
     field.append(createInput(fd));
