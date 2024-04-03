@@ -14,6 +14,10 @@ export function stripTags(input, allowd = allowedTags) {
     .replace(tags, ($0, $1) => (allowed.indexOf(`<${$1.toLowerCase()}>`) > -1 ? $0 : ''));
 }
 
+export function translate(text, placeholders) {
+  return placeholders ? placeholders[toCamelCase(text)] : text;
+}
+
 /**
  * Sanitizes a string for use as class name.
  * @param {string} name The unsanitized string
@@ -61,9 +65,9 @@ export function createLabel(fd, placeholders, tagName = 'label') {
     label.className = 'field-label';
     if (fd.label.richText === true) {
       // eslint-disable-next-line max-len
-      label.innerHTML = placeholders ? placeholders[toCamelCase(stripTags(fd.label.value))] : stripTags(fd.label.value);
+      label.innerHTML = translate(stripTags(fd.label.value), placeholders);
     } else {
-      label.textContent = placeholders ? placeholders[toCamelCase(fd.label.value)] : fd.label.value;
+      label.textContent = translate(fd.label.value, placeholders);
     }
     if (fd.label.visible === false) {
       label.dataset.visible = 'false';
@@ -99,13 +103,13 @@ export function createFieldWrapper(fd, placeholders, tagName = 'div', labelFn = 
   return fieldWrapper;
 }
 
-export function createButton(fd) {
-  const wrapper = createFieldWrapper(fd);
+export function createButton(fd, placeholders) {
+  const wrapper = createFieldWrapper(fd, placeholders);
   if (fd.buttonType) {
     wrapper.classList.add(`${fd?.buttonType}-wrapper`);
   }
   const button = document.createElement('button');
-  button.textContent = fd?.label?.visible === false ? '' : fd?.label?.value;
+  button.textContent = translate(fd?.label?.visible === false ? '' : fd?.label?.value, placeholders);
   button.type = fd.buttonType || 'button';
   button.classList.add('button');
   button.id = fd.id;

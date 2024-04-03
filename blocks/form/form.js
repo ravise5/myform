@@ -3,7 +3,7 @@ import {
   createHelpText,
   getId,
   stripTags,
-  checkValidation,
+  checkValidation, translate,
 } from './util.js';
 import GoogleReCaptcha from './integrations/recaptcha.js';
 import componentDecorater from './mappings.js';
@@ -16,16 +16,17 @@ import { fetchPlaceholders } from '../../scripts/aem.js';
 export const DELAY_MS = 0;
 let captchaField;
 let afModule;
+let placeholders = {};
 
 const withFieldWrapper = (element) => (fd) => {
-  const wrapper = createFieldWrapper(fd);
+  const wrapper = createFieldWrapper(fd, placeholders);
   wrapper.append(element(fd));
   return wrapper;
 };
 
 function setPlaceholder(element, fd) {
   if (fd.placeholder) {
-    element.setAttribute('placeholder', fd.placeholder);
+    element.setAttribute('placeholder', translate(fd.placeholder, placeholders));
   }
 }
 
@@ -46,7 +47,7 @@ function setConstraints(element, fd) {
     constraints
       .filter(([nm]) => fd[nm])
       .forEach(([nm, htmlNm]) => {
-        element.setAttribute(htmlNm, fd[nm]);
+        element.setAttribute(htmlNm, translate(fd[nm], placeholders));
       });
   }
 }
@@ -74,7 +75,7 @@ const createSelect = withFieldWrapper((fd) => {
   let ph;
   if (fd.placeholder) {
     ph = document.createElement('option');
-    ph.textContent = fd.placeholder;
+    ph.textContent = translate(fd.placeholder, placeholders);
     ph.setAttribute('disabled', '');
     ph.setAttribute('value', '');
     select.append(ph);
@@ -83,7 +84,8 @@ const createSelect = withFieldWrapper((fd) => {
 
   const addOption = (label, value) => {
     const option = document.createElement('option');
-    option.textContent = label instanceof Object ? label?.value?.trim() : label?.trim();
+    const labelValue = label instanceof Object ? label?.value?.trim() : label?.trim()
+    option.textContent = translate(labelValue, placeholders);
     option.value = value?.trim() || label?.trim();
     if (fd.value === option.value || (Array.isArray(fd.value) && fd.value.includes(option.value))) {
       option.setAttribute('selected', '');
@@ -123,7 +125,7 @@ const createSelect = withFieldWrapper((fd) => {
 });
 
 function createHeading(fd) {
-  const wrapper = createFieldWrapper(fd);
+  const wrapper = createFieldWrapper(fd, placeholders);
   const heading = document.createElement('h2');
   heading.textContent = fd.value || fd.label.value;
   heading.id = fd.id;
@@ -133,7 +135,7 @@ function createHeading(fd) {
 }
 
 function createRadioOrCheckbox(fd) {
-  const wrapper = createFieldWrapper(fd);
+  const wrapper = createFieldWrapper(fd, placeholders);
   const input = createInput(fd);
   const [value, uncheckedValue] = fd.enum || [];
   input.value = value;
@@ -145,11 +147,11 @@ function createRadioOrCheckbox(fd) {
 }
 
 function createLegend(fd) {
-  return createLabel(fd, {}, 'legend');
+  return createLabel(fd, placeholders, 'legend');
 }
 
 function createFieldSet(fd) {
-  const wrapper = createFieldWrapper(fd, {}, 'fieldset', createLegend);
+  const wrapper = createFieldWrapper(fd, placeholders, 'fieldset', createLegend);
   wrapper.id = fd.id;
   wrapper.name = fd.name;
   if (fd.fieldType === 'panel') {
@@ -208,23 +210,23 @@ function createRadioOrCheckboxGroup(fd) {
 function createPlainText(fd) {
   const paragraph = document.createElement('p');
   if (fd.richText) {
-    paragraph.innerHTML = stripTags(fd.value);
+    paragraph.innerHTML = translate(stripTags(fd.value), placeholders);
   } else {
-    paragraph.textContent = fd.value;
+    paragraph.textContent = translate(fd.value, placeholders);
   }
-  const wrapper = createFieldWrapper(fd);
+  const wrapper = createFieldWrapper(fd, placeholders);
   wrapper.id = fd.id;
   wrapper.replaceChildren(paragraph);
   return wrapper;
 }
 
 function createImage(fd) {
-  const field = createFieldWrapper(fd);
+  const field = createFieldWrapper(fd, placeholders);
   const image = `
   <picture>
     <source srcset="${fd.source}?width=2000&optimize=medium" media="(min-width: 600px)">
     <source srcset="${fd.source}?width=750&optimize=medium">
-    <img alt="${fd.altText || fd.name}" src="${fd.source}?width=750&optimize=medium">
+    <img alt="${translate(fd.altText || fd.name, placeholders)}" src="${fd.source}?width=750&optimize=medium">
   </picture>`;
   field.innerHTML = image;
   return field;
@@ -322,7 +324,7 @@ function inputDecorator(field, element) {
   }
 }
 
-function renderField(fd, placeholders) {
+function renderField(fd) {
   const fieldType = fd?.fieldType?.replace('-input', '') ?? 'text';
   const renderer = fieldRenderers[fieldType];
   let field;
@@ -344,7 +346,7 @@ function renderField(fd, placeholders) {
 
 export async function generateFormRendition(panel, container) {
   const { items = [] } = panel;
-  const placeholders = await fetchPlaceholders('de'); // hard-cording for now
+  placeholders = await fetchPlaceholders('de'); // hard-cording for now
   const promises = items.map(async (field) => {
     field.value = field.value ?? '';
     const { fieldType } = field;
