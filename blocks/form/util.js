@@ -15,7 +15,8 @@ export function stripTags(input, allowd = allowedTags) {
 }
 
 export function translate(text, placeholders) {
-  return placeholders ? placeholders[toCamelCase(text)] : text;
+  const isValidPlaceholder = placeholders && Object.entries(placeholders).length !== 0;
+  return isValidPlaceholder ? placeholders[toCamelCase(text)] : text;
 }
 
 /**
