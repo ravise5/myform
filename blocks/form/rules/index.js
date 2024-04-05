@@ -5,11 +5,15 @@ import {
 import registerCustomFunctions from './functionRegistration.js';
 import { externalize } from './functions.js';
 import initializeRuleEngineWorker from './worker.js';
+import { fetchPlaceholders } from '../../scripts/aem.js';
+import { toCamelCase } from '../../../scripts/aem';
 
 function disableElement(el, value) {
   el.toggleAttribute('disabled', value === true);
   el.toggleAttribute('aria-readonly', value === true);
 }
+
+let placeholders = {};
 
 function compare(fieldVal, htmlVal, type) {
   if (type === 'number') {
@@ -42,8 +46,8 @@ async function fieldChanged(payload, form, generateFormRendition) {
         break;
       case 'validationMessage':
         if (field.setCustomValidity && payload.field.expressionMismatch) {
-          field.setCustomValidity(currentValue);
-          updateOrCreateInvalidMsg(field, currentValue);
+          field.setCustomValidity(placeholders[toCamelCase(currentValue)]);
+          updateOrCreateInvalidMsg(field, placeholders[toCamelCase(currentValue)]);
         }
         break;
       case 'value':
@@ -229,6 +233,7 @@ async function fetchData({ id }) {
 
 export async function initAdaptiveForm(formDef, createForm) {
   const data = await fetchData(formDef);
+  placeholders = await fetchPlaceholders();
   await registerCustomFunctions();
   const form = await initializeRuleEngineWorker({
     ...formDef,

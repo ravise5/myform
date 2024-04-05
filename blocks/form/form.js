@@ -345,14 +345,12 @@ function renderField(fd) {
 }
 
 function getPlaceHolderPath() {
-  const pathArray = window.location.pathname.split('/');
-  pathArray.pop(); // remove the name of the form
-  return pathArray.join('/');
+  return window.location.pathname?.split('/')?.pop()?.join('/');
 }
 
 export async function generateFormRendition(panel, container) {
   const { items = [] } = panel;
-  placeholders = await fetchPlaceholders(getPlaceHolderPath()); // hard-cording for now
+  placeholders = await fetchPlaceholders(getPlaceHolderPath());
   const promises = items.map(async (field) => {
     field.value = field.value ?? '';
     const { fieldType } = field;
