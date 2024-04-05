@@ -346,7 +346,6 @@ function renderField(fd) {
 
 function getPlaceHolderPath() {
   const pathArray = window.location.pathname.split('/');
-  pathArray.shift(); // remove the fist '/'
   pathArray.pop(); // remove the name of the form
   return pathArray.join('/');
 }
