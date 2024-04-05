@@ -344,9 +344,16 @@ function renderField(fd) {
   return field;
 }
 
+function getPlaceHolderPath() {
+  const pathArray = window.location.pathname.split('/');
+  pathArray.shift(); // remove the fist '/'
+  pathArray.pop(); // remove the name of the form
+  return pathArray.join('/');
+}
+
 export async function generateFormRendition(panel, container) {
   const { items = [] } = panel;
-  placeholders = await fetchPlaceholders(''); // hard-cording for now
+  placeholders = await fetchPlaceholders(getPlaceHolderPath()); // hard-cording for now
   const promises = items.map(async (field) => {
     field.value = field.value ?? '';
     const { fieldType } = field;
