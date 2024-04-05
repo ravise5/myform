@@ -353,7 +353,7 @@ function getPlaceHolderPath() {
 
 export async function generateFormRendition(panel, container) {
   const { items = [] } = panel;
-  placeholders = await fetchPlaceholders(''); // hard-cording for now
+  placeholders = await fetchPlaceholders(getPlaceHolderPath()); // hard-cording for now
   const promises = items.map(async (field) => {
     field.value = field.value ?? '';
     const { fieldType } = field;
