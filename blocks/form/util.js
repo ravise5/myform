@@ -1,4 +1,3 @@
-import { toCamelCase } from '../../scripts/aem.js';
 // create a string containing head tags from h1 to h5
 const headings = Array.from({ length: 5 }, (_, i) => `<h${i + 1}>`).join('');
 const allowedTags = `${headings}<a><b><p><i><em><strong><ul><li>`;
@@ -12,11 +11,6 @@ export function stripTags(input, allowd = allowedTags) {
   const comments = /<!--[\s\S]*?-->/gi;
   return input.replace(comments, '')
     .replace(tags, ($0, $1) => (allowed.indexOf(`<${$1.toLowerCase()}>`) > -1 ? $0 : ''));
-}
-
-export function translate(text, placeholders) {
-  const isValidPlaceholder = placeholders && Object.entries(placeholders).length !== 0;
-  return isValidPlaceholder ? placeholders[toCamelCase(text)] : text;
 }
 
 /**
@@ -59,16 +53,15 @@ export function resetIds() {
   getId(clear);
 }
 
-export function createLabel(fd, placeholders, tagName = 'label') {
+export function createLabel(fd, tagName = 'label') {
   if (fd.label && fd.label.value) {
     const label = document.createElement(tagName);
     label.setAttribute('for', fd.id);
     label.className = 'field-label';
     if (fd.label.richText === true) {
-      // eslint-disable-next-line max-len
-      label.innerHTML = translate(stripTags(fd.label.value), placeholders);
+      label.innerHTML = stripTags(fd.label.value);
     } else {
-      label.textContent = translate(fd.label.value, placeholders);
+      label.textContent = fd.label.value;
     }
     if (fd.label.visible === false) {
       label.dataset.visible = 'false';
@@ -85,32 +78,31 @@ export function getHTMLRenderType(fd) {
   return fd?.fieldType?.replace('-input', '') ?? 'text';
 }
 
-export function createFieldWrapper(fd, placeholders, tagName = 'div', labelFn = createLabel) {
+export function createFieldWrapper(fd, tagName = 'div', labelFn = createLabel) {
   const fieldWrapper = document.createElement(tagName);
   const nameStyle = fd.name ? ` field-${toClassName(fd.name)}` : '';
   const renderType = getHTMLRenderType(fd);
   const fieldId = `${renderType}-wrapper${nameStyle}`;
   fieldWrapper.className = fieldId;
+  fieldWrapper.dataset.id = fd.id;
   if (fd.visible === false) {
     fieldWrapper.dataset.visible = fd.visible;
   }
   fieldWrapper.classList.add('field-wrapper');
   if (fd.label && fd.label.value && typeof labelFn === 'function') {
-    const label = labelFn(fd, placeholders);
-    if (label) {
-      fieldWrapper.append(label);
-    }
+    const label = labelFn(fd);
+    if (label) { fieldWrapper.append(label); }
   }
   return fieldWrapper;
 }
 
-export function createButton(fd, placeholders) {
-  const wrapper = createFieldWrapper(fd, placeholders);
+export function createButton(fd) {
+  const wrapper = createFieldWrapper(fd);
   if (fd.buttonType) {
     wrapper.classList.add(`${fd?.buttonType}-wrapper`);
   }
   const button = document.createElement('button');
-  button.textContent = translate(fd?.label?.visible === false ? '' : fd?.label?.value, placeholders);
+  button.textContent = fd?.label?.visible === false ? '' : fd?.label?.value;
   button.type = fd.buttonType || 'button';
   button.classList.add('button');
   button.id = fd.id;

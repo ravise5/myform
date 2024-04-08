@@ -3,30 +3,28 @@ import {
   createHelpText,
   getId,
   stripTags,
-  checkValidation, translate,
+  checkValidation,
 } from './util.js';
 import GoogleReCaptcha from './integrations/recaptcha.js';
 import componentDecorater from './mappings.js';
 import DocBasedFormToAF from './transform.js';
 import transferRepeatableDOM from './components/repeat.js';
 import { handleSubmit } from './submit.js';
-import { getSubmitBaseUrl } from './constant.js';
-import { fetchPlaceholders } from '../../scripts/aem.js';
+import { getSubmitBaseUrl, emailPattern } from './constant.js';
 
 export const DELAY_MS = 0;
 let captchaField;
 let afModule;
-let placeholders = {};
 
 const withFieldWrapper = (element) => (fd) => {
-  const wrapper = createFieldWrapper(fd, placeholders);
+  const wrapper = createFieldWrapper(fd);
   wrapper.append(element(fd));
   return wrapper;
 };
 
 function setPlaceholder(element, fd) {
   if (fd.placeholder) {
-    element.setAttribute('placeholder', translate(fd.placeholder, placeholders));
+    element.setAttribute('placeholder', fd.placeholder);
   }
 }
 
@@ -47,7 +45,7 @@ function setConstraints(element, fd) {
     constraints
       .filter(([nm]) => fd[nm])
       .forEach(([nm, htmlNm]) => {
-        element.setAttribute(htmlNm, translate(fd[nm], placeholders));
+        element.setAttribute(htmlNm, fd[nm]);
       });
   }
 }
@@ -75,7 +73,7 @@ const createSelect = withFieldWrapper((fd) => {
   let ph;
   if (fd.placeholder) {
     ph = document.createElement('option');
-    ph.textContent = translate(fd.placeholder, placeholders);
+    ph.textContent = fd.placeholder;
     ph.setAttribute('disabled', '');
     ph.setAttribute('value', '');
     select.append(ph);
@@ -84,8 +82,7 @@ const createSelect = withFieldWrapper((fd) => {
 
   const addOption = (label, value) => {
     const option = document.createElement('option');
-    const labelValue = label instanceof Object ? label?.value?.trim() : label?.trim()
-    option.textContent = translate(labelValue, placeholders);
+    option.textContent = label instanceof Object ? label?.value?.trim() : label?.trim();
     option.value = value?.trim() || label?.trim();
     if (fd.value === option.value || (Array.isArray(fd.value) && fd.value.includes(option.value))) {
       option.setAttribute('selected', '');
@@ -125,7 +122,7 @@ const createSelect = withFieldWrapper((fd) => {
 });
 
 function createHeading(fd) {
-  const wrapper = createFieldWrapper(fd, placeholders);
+  const wrapper = createFieldWrapper(fd);
   const heading = document.createElement('h2');
   heading.textContent = fd.value || fd.label.value;
   heading.id = fd.id;
@@ -135,7 +132,7 @@ function createHeading(fd) {
 }
 
 function createRadioOrCheckbox(fd) {
-  const wrapper = createFieldWrapper(fd, placeholders);
+  const wrapper = createFieldWrapper(fd);
   const input = createInput(fd);
   const [value, uncheckedValue] = fd.enum || [];
   input.value = value;
@@ -147,11 +144,11 @@ function createRadioOrCheckbox(fd) {
 }
 
 function createLegend(fd) {
-  return createLabel(fd, placeholders, 'legend');
+  return createLabel(fd, 'legend');
 }
 
 function createFieldSet(fd) {
-  const wrapper = createFieldWrapper(fd, placeholders, 'fieldset', createLegend);
+  const wrapper = createFieldWrapper(fd, 'fieldset', createLegend);
   wrapper.id = fd.id;
   wrapper.name = fd.name;
   if (fd.fieldType === 'panel') {
@@ -210,23 +207,23 @@ function createRadioOrCheckboxGroup(fd) {
 function createPlainText(fd) {
   const paragraph = document.createElement('p');
   if (fd.richText) {
-    paragraph.innerHTML = translate(stripTags(fd.value), placeholders);
+    paragraph.innerHTML = stripTags(fd.value);
   } else {
-    paragraph.textContent = translate(fd.value, placeholders);
+    paragraph.textContent = fd.value;
   }
-  const wrapper = createFieldWrapper(fd, placeholders);
+  const wrapper = createFieldWrapper(fd);
   wrapper.id = fd.id;
   wrapper.replaceChildren(paragraph);
   return wrapper;
 }
 
 function createImage(fd) {
-  const field = createFieldWrapper(fd, placeholders);
+  const field = createFieldWrapper(fd);
   const image = `
   <picture>
     <source srcset="${fd.source}?width=2000&optimize=medium" media="(min-width: 600px)">
     <source srcset="${fd.source}?width=750&optimize=medium">
-    <img alt="${translate(fd.altText || fd.name, placeholders)}" src="${fd.source}?width=750&optimize=medium">
+    <img alt="${fd.altText || fd.name}" src="${fd.source}?width=750&optimize=medium">
   </picture>`;
   field.innerHTML = image;
   return field;
@@ -254,7 +251,7 @@ async function fetchForm(pathname) {
 }
 
 function colSpanDecorator(field, element) {
-  const colSpan = field['Column Span'];
+  const colSpan = field['Column Span'] || field.properties?.colspan;
   if (colSpan && element) {
     element.classList.add(`col-${colSpan}`);
   }
@@ -319,6 +316,9 @@ function inputDecorator(field, element) {
     if (field.maxFileSize) {
       input.dataset.maxFileSize = field.maxFileSize;
     }
+    if (input.type === 'email') {
+      input.pattern = emailPattern;
+    }
     setConstraintsMessage(element, field.constraintMessages);
     element.dataset.required = field.required;
   }
@@ -329,9 +329,9 @@ function renderField(fd) {
   const renderer = fieldRenderers[fieldType];
   let field;
   if (typeof renderer === 'function') {
-    field = renderer(fd, placeholders);
+    field = renderer(fd);
   } else {
-    field = createFieldWrapper(fd, placeholders);
+    field = createFieldWrapper(fd);
     field.append(createInput(fd));
   }
   if (fd.description) {
@@ -344,27 +344,22 @@ function renderField(fd) {
   return field;
 }
 
-function getPlaceHolderPath() {
-  return window.location.pathname?.split('/')?.pop()?.join('/');
-}
-
-export async function generateFormRendition(panel, container) {
-  const { items = [] } = panel;
-  placeholders = await fetchPlaceholders(getPlaceHolderPath());
+export async function generateFormRendition(panel, container, getItems = (p) => p?.items) {
+  const items = getItems(panel) || [];
   const promises = items.map(async (field) => {
     field.value = field.value ?? '';
     const { fieldType } = field;
     if (fieldType === 'captcha') {
       captchaField = field;
     } else {
-      const element = renderField(field, placeholders);
+      const element = renderField(field);
       if (field.appliedCssClassNames) {
         element.className += ` ${field.appliedCssClassNames}`;
       }
       colSpanDecorator(field, element);
       const decorator = await componentDecorater(field);
       if (field?.fieldType === 'panel') {
-        await generateFormRendition(field, element);
+        await generateFormRendition(field, element, getItems);
         return element;
       }
       if (typeof decorator === 'function') {
@@ -392,11 +387,7 @@ function enableValidation(form) {
   });
 
   form.addEventListener('change', (event) => {
-    const { validity } = event.target;
-    if (validity.valid) {
-      // only to remove the error message
-      checkValidation(event.target);
-    }
+    checkValidation(event.target);
   });
 }
 
@@ -481,6 +472,10 @@ export default async function decorate(block) {
     form.dataset.action = formDef.action || pathname?.split('.json')[0];
     form.dataset.source = source;
     form.dataset.rules = rules;
+    form.dataset.id = formDef.id;
+    if (source === 'aem' && formDef.properties) {
+      form.dataset.formpath = formDef.properties['fd:path'];
+    }
     container.replaceWith(form);
   }
 }
