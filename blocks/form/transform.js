@@ -142,6 +142,7 @@ export default class DocBasedFormToAF {
     Type: 'fieldType',
     Label: 'label.value',
     Mandatory: 'required',
+    Accept: 'accept',
     Options: 'enum',
     OptionNames: 'enumNames',
     Visible: 'visible',
