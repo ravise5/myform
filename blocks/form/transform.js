@@ -147,6 +147,7 @@ export default class DocBasedFormToAF {
     Visible: 'visible',
     Repeatable: 'repeatable',
     Style: 'appliedCssClassNames',
+    'Required Error Message': 'constraintMessages.required',
   };
 
   fieldMapping = new Map([
