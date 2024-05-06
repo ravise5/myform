@@ -1,11 +1,9 @@
 import {
-  updateOrCreateInvalidMsg, stripTags, getPlaceHolderPath, translate,
+  updateOrCreateInvalidMsg, stripTags, translate,
 } from '../util.js';
 import { fileAttachmentText, dragDropText, defaultErrorMessages } from '../constant.js';
-import { fetchPlaceholders } from '../../../scripts/aem.js';
 
 const fileSizeRegex = /^(\d*\.?\d+)(\\?(?=[KMGT])([KMGT])(?:i?B)?|B?)$/i;
-let placeholders = {};
 /**
  * converts a string of the form "10MB" to bytes. If the string is malformed 0 is returned
  * @param {*} str
