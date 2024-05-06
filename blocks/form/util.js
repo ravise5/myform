@@ -1,4 +1,5 @@
 import { toCamelCase } from '../../scripts/aem.js';
+import { getPlaceHolderPath } from './constant.js';
 // create a string containing head tags from h1 to h5
 const headings = Array.from({ length: 5 }, (_, i) => `<h${i + 1}>`).join('');
 const allowedTags = `${headings}<a><b><p><i><em><strong><ul><li>`;
@@ -12,10 +13,6 @@ export function stripTags(input, allowd = allowedTags) {
   const comments = /<!--[\s\S]*?-->/gi;
   return input.replace(comments, '')
     .replace(tags, ($0, $1) => (allowed.indexOf(`<${$1.toLowerCase()}>`) > -1 ? $0 : ''));
-}
-
-export function getPlaceHolderPath() {
-  return window.location.pathname?.split('/')?.slice(0, -1)?.join('/');
 }
 
 export function translate(text) {
