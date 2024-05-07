@@ -347,7 +347,6 @@ function renderField(fd) {
 
 export async function generateFormRendition(panel, container) {
   const { items = [] } = panel;
-  await fetchPlaceholders(getPlaceHolderPath());
   const promises = items.map(async (field) => {
     field.value = field.value ?? '';
     const { fieldType } = field;

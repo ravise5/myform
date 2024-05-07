@@ -1,4 +1,4 @@
-import { toCamelCase } from '../../scripts/aem.js';
+import { fetchPlaceholders, toCamelCase } from '../../scripts/aem.js';
 import { getPlaceHolderPath } from './constant.js';
 // create a string containing head tags from h1 to h5
 const headings = Array.from({ length: 5 }, (_, i) => `<h${i + 1}>`).join('');
@@ -15,13 +15,18 @@ export function stripTags(input, allowd = allowedTags) {
     .replace(tags, ($0, $1) => (allowed.indexOf(`<${$1.toLowerCase()}>`) > -1 ? $0 : ''));
 }
 
-export function translate(text) {
-  const key = toCamelCase(text);
-  const placeholders = window.placeholders[getPlaceHolderPath()];
-  const placeholderExists = placeholders && placeholders[key];
-  // fallback to default if placeholder not found
-  return placeholderExists ? placeholders[key] : text;
-}
+export const translate = (function getTranslator() {
+  let placeholders = {};
+  return async (text) => {
+    const key = toCamelCase(text);
+    if (!placeholders) {
+      placeholders = await fetchPlaceholders(getPlaceHolderPath());
+    }
+    const placeholderExists = placeholders && placeholders[key];
+    // fallback to default if placeholder not found
+    return placeholderExists ? placeholders[key] : text;
+  };
+}());
 
 /**
  * Sanitizes a string for use as class name.
